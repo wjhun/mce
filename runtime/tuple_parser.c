@@ -321,6 +321,8 @@ parser parser_feed(parser p, string s)
 {
     string_foreach(i, s) {
         p = apply(p, i);
+        if (!p)
+            break;
     }
     return p;
 }

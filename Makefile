@@ -7,9 +7,9 @@ override CC=cc
 endif
 
 PROGRAMS= \
-	foo
-SRCS-foo= \
-	$(CURDIR)/foo.c \
+	mce
+SRCS-mce= \
+	$(CURDIR)/mce.c \
 	$(RUNTIME)\
 	$(SRCDIR)/unix_process/unix_process_runtime.c
 

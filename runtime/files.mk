@@ -14,12 +14,14 @@ RUNTIME=$(SRCDIR)/runtime/bitmap.c \
 	$(SRCDIR)/runtime/memops.c \
 	$(SRCDIR)/runtime/merge.c \
 	$(SRCDIR)/runtime/pqueue.c \
+	$(SRCDIR)/runtime/procedure.c \
 	$(SRCDIR)/runtime/queue.c \
 	$(SRCDIR)/runtime/random.c \
 	$(SRCDIR)/runtime/range.c \
 	$(SRCDIR)/runtime/rbtree.c \
 	$(SRCDIR)/runtime/ringbuf.c \
 	$(SRCDIR)/runtime/runtime_init.c \
+	$(SRCDIR)/runtime/sexpr.c \
 	$(SRCDIR)/runtime/sg.c \
 	$(SRCDIR)/runtime/sha256.c \
 	$(SRCDIR)/runtime/string.c \

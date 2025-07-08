@@ -20,7 +20,9 @@
 #define tag_function_tuple (4ull) /* backed tuple; struct function_tuple */
 #define tag_vector         (5ull) /* struct vector */
 #define tag_integer        (6ull)
-#define tag_max            (7ull)
+#define tag_pair           (7ull) /* cons cell */
+#define tag_procedure      (8ull)
+#define tag_max            (9ull)
 
 #include <machine.h>
 #include <attributes.h>
@@ -220,6 +222,8 @@ typedef closure_type(thunk, void);
 #include <queue.h>
 #include <refcount.h>
 
+#include <procedure.h>
+
 /* heaps that depend on above structures */
 #include <heap/id.h>
 
@@ -252,6 +256,11 @@ parser value_parser(heap h, parse_finish c, parse_error err);
 parser json_parser(heap h, parse_finish c, parse_error err);
 void json_parser_free(parser p);
 parser parser_feed (parser p, buffer b);
+
+// for sexprs, but can fix elsewhere
+typedef closure_type(value_status_handler, void, value, status);
+
+#include <sexpr.h>
 
 /* RNG */
 void init_random(heap h);

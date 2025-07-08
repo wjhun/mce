@@ -185,6 +185,8 @@ heap init_process_runtime()
     init_symbols(allocate_tagged_region(h, tag_symbol), h);
     init_vectors(allocate_tagged_region(h, tag_vector), h);
     init_strings(allocate_tagged_region(h, tag_string), h);
+    init_sexprs(allocate_tagged_region(h, tag_pair), h);
+    init_procedures(allocate_tagged_region(h, tag_procedure), h);
     init_sg(h);
     init_extra_prints();
     signal(SIGPIPE, SIG_IGN);

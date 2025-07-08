@@ -156,6 +156,27 @@ static boolean is_binary_buffer(buffer b)
     return false;
 }
 
+void print_sexpr(buffer dest, pair p);
+
+static void print_sexpr_internal(buffer dest, pair p)
+{
+    bprintf(dest, "%v", p->car);
+    if (!p->cdr)
+        return;
+    bprintf(dest, " ");
+    if (is_pair(p->cdr))
+        print_sexpr_internal(dest, p->cdr);
+    else
+        bprintf(dest, ". %v", p->cdr);
+}
+
+void print_sexpr(buffer dest, pair p)
+{
+    bprintf(dest, "(");
+    print_sexpr_internal(dest, p);
+    bprintf(dest, ")");
+}
+
 static void print_value_internal(buffer dest, value v, table *visited, s32 indent, s32 depth)
 {
     if (is_tuple(v) || is_vector(v)) {
@@ -196,6 +217,8 @@ static void print_value_internal(buffer dest, value v, table *visited, s32 inden
         }
     } else if (is_string(v)) {
         bprintf(dest, "%b", v);
+    } else if (is_pair(v)) {
+        print_sexpr(dest, v);
     } else {
         buffer b = (buffer)v;
         if (is_binary_buffer(b))
