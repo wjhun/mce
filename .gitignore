@@ -1,0 +1,17 @@
+# xref
+/TAGS
+/GTAGS
+/GPATH
+/GRTAGS
+
+# Default build directory
+/output
+
+# Vendored libaries
+/vendor
+
+# Editor stuff
+*~
+.vscode
+*.swo
+*.swp
