@@ -1,6 +1,7 @@
 RUNTIME=$(SRCDIR)/runtime/bitmap.c \
 	$(SRCDIR)/runtime/buffer.c \
 	$(SRCDIR)/runtime/crypto/chacha.c \
+	$(SRCDIR)/runtime/env.c \
 	$(SRCDIR)/runtime/extra_prints.c \
 	$(SRCDIR)/runtime/format.c \
 	$(SRCDIR)/runtime/heap/mem_debug.c \

@@ -22,7 +22,8 @@
 #define tag_integer        (6ull)
 #define tag_pair           (7ull) /* cons cell */
 #define tag_procedure      (8ull)
-#define tag_max            (9ull)
+#define tag_env            (9ull)
+#define tag_max            (10ull)
 
 #include <machine.h>
 #include <attributes.h>
@@ -222,8 +223,6 @@ typedef closure_type(thunk, void);
 #include <queue.h>
 #include <refcount.h>
 
-#include <procedure.h>
-
 /* heaps that depend on above structures */
 #include <heap/id.h>
 
@@ -261,6 +260,10 @@ parser parser_feed (parser p, buffer b);
 typedef closure_type(value_status_handler, void, value, status);
 
 #include <sexpr.h>
+
+#include <env.h>
+
+#include <procedure.h>
 
 /* RNG */
 void init_random(heap h);
