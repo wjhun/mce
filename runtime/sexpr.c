@@ -170,6 +170,15 @@ closure_function(1, 1, parser, car_complete,
     return (parser)closure(transient, pair_or_list, bound(next), car);
 }
 
+closure_function(1, 1, parser, quote_complete,
+                 completion, next,
+                 void *, p)
+{
+    value cdr = (value)p;
+    value car = sym(quote);
+    return apply(bound(next), cons(car, cdr));
+}
+
 define_closure_function(1, 1, parser, parse_sexp,
                         completion, next,
                         character, in)
@@ -190,9 +199,12 @@ define_closure_function(1, 1, parser, parse_sexp,
         } else if (is_digit(in)) {
             parser p = (parser)closure(transient, parse_number, bound(next), 0, false);
             return apply(p, in);
-        }
-        // XXX strings, etc.
-        else {
+        } else if (in == '\'' || in == '`') {
+            completion c = (completion)closure(transient, quote_complete, bound(next));
+            parser p = (parser)closure(transient, parse_sexp, c);
+            return p;
+        } else {
+            // XXX strings, etc.
             /* default to symbol */
             parser p = (parser)closure(transient, parse_symbol, bound(next), allocate_string(32));
             return apply(p, in);
