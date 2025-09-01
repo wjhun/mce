@@ -176,7 +176,7 @@ closure_function(1, 1, parser, quote_complete,
 {
     value cdr = (value)p;
     value car = sym(quote);
-    return apply(bound(next), cons(car, cdr));
+    return apply(bound(next), cons(car, cons(cdr, 0)));
 }
 
 define_closure_function(1, 1, parser, parse_sexp,
