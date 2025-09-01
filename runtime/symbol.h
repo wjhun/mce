@@ -12,7 +12,7 @@ string symbol_string(symbol s);
 
 #define sym(name)   sym_intern(name, intern)
 
-#define sym_this(name)\
+#define sym_cstring(name)\
     (intern(alloca_wrap_buffer(name, runtime_strlen(name))))
 
 table symbol_table();
