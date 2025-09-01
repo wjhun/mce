@@ -157,24 +157,27 @@ void *table_find(table t, void *c)
     return EMPTY;
 }
 
-void table_set(table t, void *c, void *v)
+/* returns old value (or EMPTY) */
+void *table_set(table t, void *c, void *v)
 {
     key k = t->key_function(c);
     key p = position(t->buckets, k);
     entry *e = t->entries + p;
     for (; *e; e = &(*e)->next) {
         if (((*e)->k == k) && t->equals_function((*e)->c, c)) {
+            void *old = (*e)->v;
             if (v == EMPTY) {
                 table_remove_internal(t, e);
             } else {
                 (*e)->v = v;
             }
-            return;
+            return old;
         }
     }
 
     if (v != EMPTY)
         table_insert_internal(t, k, e, c, v);
+    return EMPTY;
 }
 
 /* Returns true if the element was not in the table and has been inserted, false if the element is
