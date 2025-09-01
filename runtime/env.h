@@ -51,6 +51,7 @@ static inline boolean set_variable_value(symbol var, value val, env_frame env)
     while (!is_empty_env(env)) {
         value v = (value)table_find(env->t, var);
         if (v) {
+            rprintf("%s: t %p var %v -> val %p\n", __func__, env->t, var, val);
             table_set(env->t, var, val);
             return true;
         }
@@ -59,9 +60,11 @@ static inline boolean set_variable_value(symbol var, value val, env_frame env)
     return false;
 }
 
+// XXX add scan
 static inline void define_variable(symbol var, value val, env_frame env)
 {
     assert(env);
+    rprintf("%s: t %p, var %v, val %p\n", __func__, env, var, val);
     table_set(env->t, var, val);
 }
 
