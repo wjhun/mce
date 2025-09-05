@@ -13,6 +13,8 @@ SRCS-mce= \
 	$(RUNTIME)\
 	$(SRCDIR)/unix_process/unix_process_runtime.c
 
+LIBS-mce= \
+	-lreadline
 
 CFLAGS+=	-O3 \
 		-I$(ARCHDIR) \

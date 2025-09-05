@@ -2,8 +2,6 @@
 
 static heap env_heap;
 
-// embed make-frame
-// vars,vals may actually be vectors - handle either pair or vector?
 env_frame extend_environment(pair variables, pair values, env_frame base_env)
 {
     int n = pair_list_length(variables);

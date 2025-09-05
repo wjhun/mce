@@ -11,20 +11,15 @@ typedef struct env_frame {
 
 /*** users of environments: ***/
 
-// enclosing-environment
-
 static inline env_frame enclosing_environment(env_frame e)
 {
     return e->next;
 }
 
-// first-frame
 static inline env_frame first_frame(env_frame e)
 {
     return e;
 }
-
-// the-empty-environment
 
 /* wrap this in case we want another singleton as empty env */
 static inline boolean is_empty_env(env_frame e)
@@ -51,7 +46,7 @@ static inline boolean set_variable_value(symbol var, value val, env_frame env)
     while (!is_empty_env(env)) {
         value v = (value)table_find(env->t, var);
         if (v) {
-            rprintf("%s: t %p var %v -> val %p\n", __func__, env->t, var, val);
+            // rprintf("%s: t %p var %v -> val %p\n", __func__, env->t, var, val);
             table_set(env->t, var, val);
             return true;
         }
@@ -64,16 +59,8 @@ static inline boolean set_variable_value(symbol var, value val, env_frame env)
 static inline void define_variable(symbol var, value val, env_frame env)
 {
     assert(env);
-    rprintf("%s: t %p, var %v, val %p\n", __func__, env, var, val);
+    // rprintf("%s: t %p, var %v, val %p\n", __func__, env, var, val);
     table_set(env->t, var, val);
 }
 
 void init_env(heap h, heap init);
-
-// eval-if
-
-// eval-sequence
-
-// list-of-values
-
-

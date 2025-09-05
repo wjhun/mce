@@ -90,19 +90,13 @@ closure_function(2, 1, parser, cdr_complete,
     return (parser)closure(transient, eat_closing_paren, bound(next), bound(car), cdr);
 }
 
-// XXX
-static inline boolean is_null_list(value v)
-{
-    return !v;
-}
-
 /* no parsing at this point, just consing up the chain and passing to caller */
 closure_function(2, 1, parser, cons_complete,
                  completion, next, value, car,
                  void *, p)
 {
     value cdr = (value)p;
-    assert(is_null_list(cdr) || tagof(cdr) == tag_pair);
+    assert(is_null(cdr) || tagof(cdr) == tag_pair);
     return apply(bound(next), cons(bound(car), cdr));
 }
 

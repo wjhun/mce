@@ -1,3 +1,11 @@
 # meta-circular evaluator
 
-wip
+## building
+
+```make```
+
+## running
+
+```output/bin/mce```
+
+exit with EOF

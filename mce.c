@@ -1,71 +1,13 @@
+/* a meta-circular evaluator */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <runtime.h>
 
-/*
-
-  metacircular evaluator
-
-  data types
-  ----------
-
-  cons type (pair)
-
-
-  scheme primitives
-  -----------------
-  +
-  >
-  =
-  *
-
-  apply (but only for apply-primitive-procedure)
-  and
-  car
-  cadr
-  caddr
-  cdr
-  cond
-  cons
-  define
-  else
-  eq?
-  error
-  if
-  lambda
-  let
-  list
-  list-ref
-  map
-  null?
-  number? (antiquated?)
-  or
-  pair?
-
-  set-car!
-  set-cdr!
-  string?
-  symbol?
-
- */
-
-/* types
-
-   value
-   pair (of values)
-
-   value types
-   - empty list
-   - pair
-   - number
-   - character
-   - string
-   - vector
-   - symbol
-   - procedure
- */
+#include <readline/readline.h>
+#include <readline/history.h>
 
 //#define MCE_DEBUG
 #ifdef MCE_DEBUG
@@ -81,7 +23,6 @@ static value m_eval(value exp, env_frame env);
 
 static boolean self_evaluating(value exp)
 {
-    // XXX boolean
     return is_integer(exp) || is_string(exp);
 }
 
@@ -93,7 +34,6 @@ static boolean is_tagged_list(value exp, const char *tag)
     return is_symbol(car) && sym_cstring_compare(car, tag);
 }
 
-/* TODO cache these symbols */
 static inline boolean is_quoted(value exp)
 {
     return is_tagged_list(exp, "quote");
@@ -288,26 +228,6 @@ static value m_eval(value exp, env_frame env)
     return 0;
 }
 
-closure_function(1, 2, void, done,
-                 env_frame, env,
-                 value, v, status, s)
-{
-    mce_debug("parse finished: value %v, status %v\n", v, s);
-    value result = m_eval(v, bound(env));
-    rprintf("%v\n", result);
-    closure_finish();
-}
-
-static buffer read_stdin(heap h)
-{
-    buffer in = allocate_buffer(h, 1024);
-    int r, k;
-    while ((r = in->length - in->end) &&
-           ((k = read(0, in->contents + in->end, r)), in->end += k, k > 0))
-        buffer_extend(in, 1024);
-    return in;
-}
-
 typedef struct primitive_proc {
     const char *name;
     value (*fn)(value args);
@@ -444,16 +364,41 @@ static env_frame setup_initial_environment(void)
     return extend_environment(names, objs, 0);
 }
 
+closure_function(2, 2, void, done,
+                 env_frame, env, boolean *, complete,
+                 value, v, status, s)
+{
+    mce_debug("parse finished: value %v, status %v\n", v, s);
+    value result = m_eval(v, bound(env));
+    if (!is_null(result))
+        rprintf("%v\n", result);
+    *bound(complete) = true;
+    closure_finish();
+}
+
 int main(int argc, char *argv[])
 {
     heap h = init_process_runtime();
-
     env_frame env = setup_initial_environment();
 
-    // synchronous
     do {
-        parser p = sexp_parser(closure(h, done, env));
-        parser_feed(p, read_stdin(h));
+        boolean complete = false;
+        parser p = sexp_parser(closure(h, done, env, &complete));
+        do {
+            // this is actually lossy if an expression begins mid-line;
+            // make the parser continuous
+            char *input = readline("> ");
+            if (!input) {
+                // teardown
+                return EXIT_SUCCESS;
+            }
+            if (*input) {
+                buffer b = alloca_wrap_cstring(input);
+                parser_feed(p, b);
+                add_history(input);
+            }
+            free(input);
+        } while (!complete);
     } while (1);
     return EXIT_SUCCESS;
 }
