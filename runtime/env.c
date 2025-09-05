@@ -32,7 +32,6 @@ env_frame extend_environment(pair variables, pair values, env_frame base_env)
         value var = car_of(var_p);
         value val = car_of(val_p);
         assert(var && is_symbol(var));
-        rprintf("t %p var %v -> val %p\n", t, var, val);
         table_set(t, var, val);
         var_p = cdr_of(var_p);
         val_p = cdr_of(val_p);

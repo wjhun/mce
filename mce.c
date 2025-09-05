@@ -67,6 +67,13 @@
    - procedure
  */
 
+//#define MCE_DEBUG
+#ifdef MCE_DEBUG
+#define mce_debug(x, ...) do {rprintf("MCE %s: " x, __func__, ##__VA_ARGS__);} while(0)
+#else
+#define mce_debug(x, ...)
+#endif
+
 symbol sym_true;
 symbol sym_false;
 
@@ -78,55 +85,60 @@ static boolean self_evaluating(value exp)
     return is_integer(exp) || is_string(exp);
 }
 
-static boolean is_tagged_list(value exp, symbol tag)
+static boolean is_tagged_list(value exp, const char *tag)
 {
     if (!is_pair(exp))
         return false;
     value car = car_of((pair)exp);
-    return is_symbol(car) && car == tag;
+    return is_symbol(car) && sym_cstring_compare(car, tag);
 }
 
 /* TODO cache these symbols */
 static inline boolean is_quoted(value exp)
 {
-    return is_tagged_list(exp, sym_cstring("quote"));
+    return is_tagged_list(exp, "quote");
 }
 
 static inline boolean is_assignment(value exp)
 {
-    return is_tagged_list(exp, sym_cstring("set!"));
+    return is_tagged_list(exp, "set!");
 }
 
 static inline boolean is_definition(value exp)
 {
-    return is_tagged_list(exp, sym_cstring("define"));
+    return is_tagged_list(exp, "define");
 }
 
 static inline boolean is_lambda(value exp)
 {
-    return is_tagged_list(exp, sym_cstring("lambda"));
+    return is_tagged_list(exp, "lambda");
 }
 
 static inline boolean is_if(value exp)
 {
-    return is_tagged_list(exp, sym_cstring("if"));
+    return is_tagged_list(exp, "if");
 }
 
 static inline boolean is_primitive_procedure(value exp)
 {
-    return is_tagged_list(exp, sym_cstring("primitive"));
+    return is_tagged_list(exp, "primitive");
 }
 
 static inline boolean is_compound_procedure(value exp)
 {
-    return is_tagged_list(exp, sym_cstring("procedure"));
+    return is_tagged_list(exp, "procedure");
+}
+
+static inline boolean is_begin(value exp)
+{
+    return is_tagged_list(exp, "begin");
 }
 
 static inline void eval_assignment(value exp, env_frame env)
 {
     value var = cadr_of(exp); /* assignment-variable */
     value val = caddr_of(exp); /* assignment-value */
-    rprintf("ass: var %v, val %p, env %p\n", var, val, env);
+    mce_debug("var %v, val %p, env %p\n", var, val, env);
     if (!set_variable_value(var, val, env)) {
         // error path
         rprintf("Unbound variable -- SET! %v, env %p\n", var, env);
@@ -150,7 +162,6 @@ static inline value make_lambda(value params, value body)
 static inline value definition_value(value exp)
 {
     value v = cadr_of(exp);
-    rprintf("%s: %v\n", __func__, v);
     if (is_symbol(v))
         return caddr_of(exp);
     return make_lambda(cdadr_of(exp), cddr_of(exp));
@@ -160,38 +171,33 @@ static inline void eval_definition(value exp, env_frame env)
 {
     value defvar = definition_variable(exp);
     value val = definition_value(exp);
-    rprintf("%s: var %v, value exp %v\n", __func__, defvar, val);
+    mce_debug("var %v, value exp %v\n", defvar, val);
     val = m_eval(val, env);
-    rprintf("after eval: %p\n", val);
-    rprintf("after eval: %v\n", val);
+    mce_debug("after eval: %v\n", val);
     define_variable(defvar, val, env);
 }
 
 static inline value make_procedure(value params, value body, env_frame env)
 {
-    rprintf("%s\n", __func__);
     procedure p = compound_procedure(params, body, env);
-    rprintf("... %v\n", p);
-    value v = list_from_args(2, sym(procedure), p);
-    rprintf("... v %p\n", v);
-    return v;
+    return list_from_args(2, sym(procedure), p);
 }
 
 static inline value eval_if(value exp, env_frame env)
 {
     value predicate_exp = cadr_of(exp);
     value predicate_value = m_eval(predicate_exp, env);
-    rprintf("%s: pred exp %v, value %v\n", __func__, predicate_exp, predicate_value);
+    mce_debug("pred exp %v, value %v\n", predicate_exp, predicate_value);
 
     if (predicate_value != sym_false) {
         value consequent_exp = caddr_of(exp);
         value consequent_value = m_eval(consequent_exp, env);
-        rprintf("   conseq exp %v, value %v\n", consequent_exp, consequent_value);
+        mce_debug("   conseq exp %v, value %v\n", consequent_exp, consequent_value);
         return consequent_value;
     }
     value alt_exp = !is_null(cdddr_of(exp)) ? cadddr_of(exp) : sym_false;
     value alt_value = m_eval(alt_exp, env);
-    rprintf("   alt exp %v, value %v\n", alt_exp, alt_value);
+    mce_debug("   alt exp %v, value %v\n", alt_exp, alt_value);
     return alt_value;
 }
 
@@ -219,19 +225,19 @@ static value m_apply(value proc, value args)
         assert(is_procedure((value)impl));
         assert(procedure_is_primitive(impl)); /* internal state agrees */
         value result = impl->fn(args); /* apply */
-        rprintf("%s: prim result %v\n", __func__, result);
+        mce_debug("primitive %v, args %v, result %v\n", impl, args, result);
         return result;
     }
 
     if (is_compound_procedure(proc)) {
-        rprintf("... %v\n", proc);
         procedure impl = cadr_of(proc);
         assert(is_procedure((value)impl));
         assert(!procedure_is_primitive(impl)); /* internal state agrees */
 
         env_frame extended_env = extend_environment(impl->params, args, impl->env);
         value result = eval_sequence(impl->body, extended_env);
-        rprintf("%s: compound body %v result %v\n", __func__, impl->body, result);
+        mce_debug("compound body %v, params %v, args %v, result %v\n",
+                  impl->body, impl->params, args, result);
         return result;
     }
 
@@ -247,13 +253,11 @@ static value list_of_values(value exps, env_frame env)
 
 static value m_eval(value exp, env_frame env)
 {
-    rprintf("%s: exp %v, env %p\n", __func__, exp, env);
+    mce_debug("exp %v, env %p\n", exp, env);
     if (self_evaluating(exp)) {
         return exp;
     } else if (is_symbol(exp)) { /* variable? */
-        rprintf("lookup exp %v in env %p: ", exp, env);
         value v = lookup_variable_value((symbol)exp, env);
-        rprintf("%p\n", v);
         return v;
     } else if (is_quoted(exp)) {
         return cadr_of(exp); /* text-of-quotation */
@@ -269,8 +273,10 @@ static value m_eval(value exp, env_frame env)
         value params = cadr_of(exp);
         value body = cddr_of(exp);
         return make_procedure(params, body, env);
+    } else if (is_begin(exp)) {
+        value actions = cdr_of(exp);
+        return eval_sequence(actions, env);
     }
-    // begin?
     // cond?
     else if (is_application(exp)) {
         value proc = m_eval(car_of(exp) /* operator */, env);
@@ -286,9 +292,9 @@ closure_function(1, 2, void, done,
                  env_frame, env,
                  value, v, status, s)
 {
-    rprintf("parse finished: value %v, status %v\n", v, s);
+    mce_debug("parse finished: value %v, status %v\n", v, s);
     value result = m_eval(v, bound(env));
-    rprintf("eval finished: result %v\n", result);
+    rprintf("%v\n", result);
     closure_finish();
 }
 
@@ -302,19 +308,6 @@ static buffer read_stdin(heap h)
     return in;
 }
 
-/* initial environment
-
-   primitive-procedures list
-   (list (list `car car)
-        (list `cdr cdr)
-        (list `cons cons)
-        (list `null? null?)
-        (list `+ +)
-        (list `> >)
-        (list `= =)
-        (list `* *)
- */
-
 typedef struct primitive_proc {
     const char *name;
     value (*fn)(value args);
@@ -322,35 +315,28 @@ typedef struct primitive_proc {
 
 value prim_car(value args)
 {
-    rprintf("%s\n", __func__);
     return car_of(args);
 }
 
 value prim_cdr(value args)
 {
-    rprintf("%s\n", __func__);
     return cdr_of(args);
 }
 
 value prim_cons(value args)
 {
-    rprintf("%s\n", __func__);
     return cons(car_of(args), cadr_of(args));
 }
 
 value prim_nullq(value args)
 {
-    rprintf("%s\n", __func__);
-    return args ? sym_false : sym_true;
+    return is_null(args) ? sym_false : sym_true;
 }
 
 value prim_add(value args)
 {
-    rprintf("%s, args %v\n", __func__, args);
     value va = car_of(args);
-    rprintf("va %v\n", va);
     value vb = cadr_of(args);
-    rprintf("vb %v\n", vb);
     s64 a, b, c;
     if (!s64_from_value(va, &a)) {
         rprintf("'+': car not s64: %v\n", va);
@@ -363,18 +349,13 @@ value prim_add(value args)
         return 0;
     }
     c = a + b;
-    value ret = value_from_s64(c);
-    rprintf("ret %v\n", ret);
-    return ret;
+    return value_from_s64(c);
 }
 
 value prim_gt(value args)
 {
-    rprintf("%s, args %v\n", __func__, args);
     value va = car_of(args);
-    rprintf("va %v\n", va);
     value vb = cadr_of(args);
-    rprintf("vb %v\n", vb);
     s64 a, b;
     if (!s64_from_value(va, &a)) {
         rprintf("'>': car not s64: %v\n", va);
@@ -391,17 +372,15 @@ value prim_gt(value args)
 
 value prim_eq(value args)
 {
-    rprintf("%s\n", __func__);
-    return 0;
+    value va = car_of(args);
+    value vb = cadr_of(args);
+    return is_symbol(va) && is_symbol(vb) && va == vb ? sym_true : sym_false;
 }
 
 value prim_mult(value args)
 {
-    rprintf("%s, args %v\n", __func__, args);
     value va = car_of(args);
-    rprintf("va %v\n", va);
     value vb = cadr_of(args);
-    rprintf("vb %v\n", vb);
     s64 a, b, c;
     if (!s64_from_value(va, &a)) {
         rprintf("'*': car not s64: %v\n", va);
@@ -414,9 +393,14 @@ value prim_mult(value args)
         return 0;
     }
     c = a * b;
-    value ret = value_from_s64(c);
-    rprintf("ret %v\n", ret);
-    return ret;
+    return value_from_s64(c);
+}
+
+value prim_list(value args)
+{
+    if (is_null(args))
+        return 0;
+    return cons(car_of(args), prim_list(cdr_of(args)));
 }
 
 static struct primitive_proc primitive_procs[] = {
@@ -428,6 +412,7 @@ static struct primitive_proc primitive_procs[] = {
     { ">", prim_gt },
     { "=", prim_eq },
     { "*", prim_mult },
+    { "list", prim_list },
     { 0, 0 }
 };
 
@@ -448,11 +433,11 @@ static env_frame setup_initial_environment(void)
 {
     /* primitive-procedure-names */
     pair names = cons_prim_names(primitive_procs);
-    rprintf("primitive names %v\n", names);
+    mce_debug("primitive names %v\n", names);
 
     /* primitive-procedure-objects */
     pair objs = cons_prim_objects(primitive_procs);
-    rprintf("primitive objects %p\n", objs);
+    mce_debug("primitive objects %p\n", objs);
 
     sym_true = sym_cstring("true");
     sym_false = sym_cstring("false");

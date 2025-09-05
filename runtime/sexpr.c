@@ -244,7 +244,6 @@ static pair cons_list_arg(unsigned int remain, vlist *args)
     if (remain == 0)
         return 0;
     value v = varg(*args, value);
-    rprintf("%s: v %p\n", __func__, v);
     return cons(v, cons_list_arg(remain - 1, args));
 }
 
