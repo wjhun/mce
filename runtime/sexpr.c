@@ -236,3 +236,23 @@ void init_sexprs(heap h, heap init)
 {
     sexpheap = h;
 }
+
+/* misc sexpr helpers */
+
+static pair cons_list_arg(unsigned int remain, vlist *args)
+{
+    if (remain == 0)
+        return 0;
+    value v = varg(*args, value);
+    rprintf("%s: v %p\n", __func__, v);
+    return cons(v, cons_list_arg(remain - 1, args));
+}
+
+pair list_from_args(int num, ...)
+{
+    vlist a;
+    vstart(a, num);
+    pair l = cons_list_arg(num, &a);
+    vend(a);
+    return l;
+}

@@ -219,7 +219,16 @@ static void print_value_internal(buffer dest, value v, table *visited, s32 inden
         bprintf(dest, "%b", v);
     } else if (is_pair(v)) {
         print_sexpr(dest, v);
+    } else if (is_procedure(v)) {
+        procedure p = (procedure)v;
+        if (!p->params) {
+            bprintf(dest, "<primitive: fn %p>", p->fn);
+        } else {
+            bprintf(dest, "<proc: params %v, body %v, env %p>",
+                    p->params, p->body, p->env);
+        }
     } else {
+        assert(tagof(v) == 0);
         buffer b = (buffer)v;
         if (is_binary_buffer(b))
             bprintf(dest, "{binary, length %d}", buffer_length(b));

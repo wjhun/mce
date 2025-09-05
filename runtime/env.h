@@ -70,14 +70,6 @@ static inline void define_variable(symbol var, value val, env_frame env)
 
 void init_env(heap h, heap init);
 
-/*** eval ***/
-
-// m-eval
-
-// eval-assignment
-
-// eval-definition
-
 // eval-if
 
 // eval-sequence
