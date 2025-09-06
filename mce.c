@@ -393,8 +393,10 @@ int main(int argc, char *argv[])
                 return EXIT_SUCCESS;
             }
             if (*input) {
-                buffer b = alloca_wrap_cstring(input);
-                parser_feed(p, b);
+                p = parser_feed(p, alloca_wrap_cstring(input));
+                /* newline needed for termination */
+                if (p)
+                    p = parser_feed(p, alloca_wrap_cstring("\n"));
                 add_history(input);
             }
             free(input);

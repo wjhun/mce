@@ -9,10 +9,6 @@ typedef struct procedure {
     env_frame env;
 } *procedure;
 
-// procedure-environment
-
-// make-procedure
-
 static inline boolean is_procedure(value v) {
     return v && tagof(v) == tag_procedure;
 }

@@ -29,7 +29,8 @@ closure_function(3, 1, parser, parse_number,
         bound(value) = bound(value) * 10 + inc;
         return (parser)closure_self();
     }
-    parser p = apply(bound(next), value_from_s64(bound(value) * (bound(negative) ? -1 : 1)));
+    value v = value_from_s64(bound(value) * (bound(negative) ? -1 : 1));
+    parser p = apply(bound(next), v);
     return p ? apply(p, in) : 0;
 }
 
