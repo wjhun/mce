@@ -158,16 +158,23 @@ static boolean is_binary_buffer(buffer b)
 
 void print_sexpr(buffer dest, pair p);
 
+static void print_with_quotes(buffer dest, value v)
+{
+    bprintf(dest, is_string(v) ? "\"%v\"" : "%v", v);
+}
+
 static void print_sexpr_internal(buffer dest, pair p)
 {
-    bprintf(dest, "%v", p->car);
+    print_with_quotes(dest, p->car);
     if (!p->cdr)
         return;
     bprintf(dest, " ");
-    if (is_pair(p->cdr))
+    if (is_pair(p->cdr)) {
         print_sexpr_internal(dest, p->cdr);
-    else
-        bprintf(dest, ". %v", p->cdr);
+    } else {
+        bprintf(dest, ". ");
+        print_with_quotes(dest, p->cdr);
+    }
 }
 
 void print_sexpr(buffer dest, pair p)
