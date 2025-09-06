@@ -30,4 +30,6 @@ boolean set_variable_value(symbol var, value val, env_frame env);
 
 void define_variable(symbol var, value val, env_frame env);
 
+env_frame new_env_frame(env_frame base_env);
+
 void init_env(heap h, heap init);

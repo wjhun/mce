@@ -60,6 +60,11 @@ static inline boolean is_begin(value exp)
     return is_tagged_list(exp, "begin");
 }
 
+static inline boolean is_let(value exp)
+{
+    return is_tagged_list(exp, "let");
+}
+
 static inline boolean self_evaluating(value exp)
 {
     return is_integer(exp) || is_string(exp);

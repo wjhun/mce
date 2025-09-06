@@ -106,6 +106,23 @@ static value m_apply(value proc, value args)
     return 0;
 }
 
+static value eval_let(value exp, env_frame env)
+{
+    env_frame extended_env = new_env_frame(env);
+    assert(extended_env != INVALID_ADDRESS);
+    value pairs = cadr_of(exp);
+    while (!is_null(pairs)) {
+        value pair = car_of(pairs);
+        assert(is_pair(pair));
+        value var = car_of(pair);
+        value val = cadr_of(pair);
+        define_variable(var, val, extended_env);
+        pairs = cdr_of(pairs);
+    }
+    value body = caddr_of(exp);
+    return m_eval(body, extended_env);
+}
+
 static value list_of_values(value exps, env_frame env)
 {
     return !is_null(exps) ? cons(m_eval(car_of(exps), env),
@@ -136,6 +153,8 @@ static value m_eval(value exp, env_frame env)
     } else if (is_begin(exp)) {
         value actions = cdr_of(exp);
         return eval_sequence(actions, env);
+    } else if (is_let(exp)) {
+        return eval_let(exp, env);
     }
     // cond?
     else if (is_application(exp)) {
