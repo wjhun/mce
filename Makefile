@@ -10,6 +10,7 @@ PROGRAMS= \
 	mce
 SRCS-mce= \
 	$(CURDIR)/mce.c \
+	$(CURDIR)/primitives.c \
 	$(RUNTIME)\
 	$(SRCDIR)/unix_process/unix_process_runtime.c
 
