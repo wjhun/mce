@@ -235,12 +235,13 @@ typedef struct primitive_proc {
 
 value prim_car(value args)
 {
-    return car_of(args);
+    return caar_of(args);
 }
 
 value prim_cdr(value args)
 {
-    return cdr_of(args);
+    value v = car_of(args);
+    return cdr_of(v);
 }
 
 value prim_cons(value args)
@@ -294,7 +295,18 @@ value prim_eq(value args)
 {
     value va = car_of(args);
     value vb = cadr_of(args);
-    return is_symbol(va) && is_symbol(vb) && va == vb ? sym_true : sym_false;
+    s64 a, b;
+    if (!s64_from_value(va, &a)) {
+        rprintf("'=': car not s64: %v\n", va);
+        // exception
+        return 0;
+    }
+    if (!s64_from_value(vb, &b)) {
+        rprintf("'=': cadr not s64: %v\n", vb);
+        // exception
+        return 0;
+    }
+    return a == b ? sym_true : sym_false;
 }
 
 value prim_mult(value args)

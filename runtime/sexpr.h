@@ -22,6 +22,12 @@ static inline value car_of(pair p)
     return p->car;
 }
 
+static inline value caar_of(pair p)
+{
+    assert(is_pair(p));
+    return car_of(p->car);;
+}
+
 static inline value cdr_of(pair p)
 {
     assert(is_pair(p));
