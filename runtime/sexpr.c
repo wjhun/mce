@@ -34,6 +34,29 @@ closure_function(3, 1, parser, parse_number,
     return p ? apply(p, in) : 0;
 }
 
+closure_function(3, 1, parser, parse_string,
+                 completion, next, string, s, boolean, escaped,
+                 character, in)
+{
+    if (!bound(escaped)) {
+        if (in == '\\') {
+            bound(escaped) = true;
+            return (parser)closure_self();
+        }
+        if (in == '"') {
+            return apply(bound(next), bound(s));
+        }
+        push_u8(bound(s), in);
+    } else {
+        if (in == '"' ||
+            in == '\\') {
+            push_u8(bound(s), in);
+        }
+        bound(escaped) = false;
+    }
+    return (parser)closure_self();
+}
+
 static boolean is_sym_delimiter(character in)
 {
     return (runtime_strchr(" \n\r\t()", in) != 0);
@@ -41,8 +64,7 @@ static boolean is_sym_delimiter(character in)
 
 // XXX error path
 closure_function(2, 1, parser, parse_symbol,
-                 completion, next,
-                 string, s,
+                 completion, next, string, s,
                  character, in)
 {
     // no guard rails
@@ -196,10 +218,10 @@ define_closure_function(1, 1, parser, parse_sexp,
             return apply(p, in);
         } else if (in == '\'' || in == '`') {
             completion c = (completion)closure(transient, quote_complete, bound(next));
-            parser p = (parser)closure(transient, parse_sexp, c);
-            return p;
+            return (parser)closure(transient, parse_sexp, c);
+        } else if (in == '\"') {
+            return (parser)closure(transient, parse_string, bound(next), allocate_string(32), false);
         } else {
-            // XXX strings, etc.
             /* default to symbol */
             parser p = (parser)closure(transient, parse_symbol, bound(next), allocate_string(32));
             return apply(p, in);

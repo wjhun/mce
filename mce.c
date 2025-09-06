@@ -46,7 +46,6 @@ static void eval_definition(value exp, env_frame env)
     value val = definition_value(exp);
     mce_debug("var %v, value exp %v\n", defvar, val);
     val = m_eval(val, env);
-    mce_debug("after eval: %v\n", val);
     define_variable(defvar, val, env);
 }
 
@@ -109,8 +108,8 @@ static value m_apply(value proc, value args)
 
 static value list_of_values(value exps, env_frame env)
 {
-    return exps ? cons(m_eval(car_of(exps), env),
-                       list_of_values(cdr_of(exps), env)) : 0;
+    return !is_null(exps) ? cons(m_eval(car_of(exps), env),
+                                 list_of_values(cdr_of(exps), env)) : 0;
 }
 
 static value m_eval(value exp, env_frame env)
@@ -119,8 +118,7 @@ static value m_eval(value exp, env_frame env)
     if (self_evaluating(exp)) {
         return exp;
     } else if (is_symbol(exp)) { /* variable? */
-        value v = lookup_variable_value((symbol)exp, env);
-        return v;
+        return lookup_variable_value((symbol)exp, env);
     } else if (is_quoted(exp)) {
         return cadr_of(exp); /* text-of-quotation */
     } else if (is_assignment(exp)) {
@@ -156,8 +154,9 @@ closure_function(2, 2, void, done,
 {
     mce_debug("parse finished: value %v, status %v\n", v, s);
     value result = m_eval(v, bound(env));
-    if (!is_null(result))
-        rprintf("%v\n", result);
+    if (!is_null(result)) {
+        rprintf(is_string(result) ? "\"%v\"\n" : "%v\n", result);
+    }
     *bound(complete) = true;
     closure_finish();
 }
