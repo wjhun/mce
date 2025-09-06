@@ -35,6 +35,19 @@ void define_variable(symbol var, value val, env_frame env)
     table_set(env->t, var, val);
 }
 
+env_frame new_env_frame(env_frame base_env)
+{
+    table t = allocate_table(env_heap, key_from_symbol, pointer_equal);
+    if (t == INVALID_ADDRESS)
+        return INVALID_ADDRESS;
+    env_frame ef = allocate(env_heap, sizeof(*ef));
+    if (ef != INVALID_ADDRESS) {
+        ef->t = t;
+        ef->next = base_env;
+    }
+    return ef;
+}
+
 env_frame extend_environment(pair variables, pair values, env_frame base_env)
 {
     int n = pair_list_length(variables);
@@ -46,14 +59,9 @@ env_frame extend_environment(pair variables, pair values, env_frame base_env)
         return INVALID_ADDRESS;
     }
 
-    table t = allocate_table(env_heap, key_from_symbol, pointer_equal);
-    if (t == INVALID_ADDRESS)
-        return INVALID_ADDRESS;
-    env_frame ef = allocate(env_heap, sizeof(*ef));
-    if (ef != INVALID_ADDRESS) {
-        ef->t = t;
-        ef->next = base_env;
-    }
+    env_frame ef = new_env_frame(base_env);
+    if (ef == INVALID_ADDRESS)
+        return ef;
 
     pair var_p = variables;
     pair val_p = values;
@@ -63,7 +71,7 @@ env_frame extend_environment(pair variables, pair values, env_frame base_env)
         value var = car_of(var_p);
         value val = car_of(val_p);
         assert(var && is_symbol(var));
-        table_set(t, var, val);
+        table_set(ef->t, var, val);
         var_p = cdr_of(var_p);
         val_p = cdr_of(val_p);
     }
