@@ -1,15 +1,11 @@
 #pragma once
 
-/* represents a single frame in an environment - but also is handle to the
-   environment expressed by the chain of frames starting with the frame
-   pointed to */
-
+/* An env_frame represents a single frame in an environment as well as a whole
+   environment (a chain of frames). */
 typedef struct env_frame {
     table t;
     struct env_frame *next;
 } *env_frame;
-
-/*** users of environments: ***/
 
 static inline env_frame enclosing_environment(env_frame e)
 {
@@ -21,7 +17,6 @@ static inline env_frame first_frame(env_frame e)
     return e;
 }
 
-/* wrap this in case we want another singleton as empty env */
 static inline boolean is_empty_env(env_frame e)
 {
     return !e;
@@ -29,38 +24,10 @@ static inline boolean is_empty_env(env_frame e)
 
 env_frame extend_environment(pair variables, pair values, env_frame base_env);
 
-static inline value lookup_variable_value(symbol var, env_frame env)
-{
-    while (!is_empty_env(env)) {
-        value v = (value)table_find(env->t, var);
-        if (v)
-            return v;
-        env = env->next;
-    }
-    return 0;
-}
+value lookup_variable_value(symbol var, env_frame env);
 
-/* overwrite existing value only, return false if not found */
-static inline boolean set_variable_value(symbol var, value val, env_frame env)
-{
-    while (!is_empty_env(env)) {
-        value v = (value)table_find(env->t, var);
-        if (v) {
-            // rprintf("%s: t %p var %v -> val %p\n", __func__, env->t, var, val);
-            table_set(env->t, var, val);
-            return true;
-        }
-        env = env->next;
-    }
-    return false;
-}
+boolean set_variable_value(symbol var, value val, env_frame env);
 
-// XXX add scan
-static inline void define_variable(symbol var, value val, env_frame env)
-{
-    assert(env);
-    // rprintf("%s: t %p, var %v, val %p\n", __func__, env, var, val);
-    table_set(env->t, var, val);
-}
+void define_variable(symbol var, value val, env_frame env);
 
 void init_env(heap h, heap init);
